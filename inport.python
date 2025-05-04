@@ -1,0 +1,59 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Parameters
+k_e = 0.1                # Elimination rate constant (1/hr)
+V_d = 10                 # Volume of distribution (L)
+C_target = 2.0           # Target drug concentration (mg/L)
+dt = 0.1                 # Time step (hr)
+time = np.arange(0, 50, dt)
+
+# PID Parameters
+Kp = 5.0
+Ki = 0.1
+Kd = 0.5
+
+# Initialization
+C = 0.0                  # Initial concentration
+integral = 0.0
+prev_error = 0.0
+
+concentration = []
+infusion_rate = []
+
+# Simulation loop
+for t in time:
+    # Compute error
+    error = C_target - C
+    integral += error * dt
+    derivative = (error - prev_error) / dt
+    prev_error = error
+
+    # PID control
+    u = Kp * error + Ki * integral + Kd * derivative  # Infusion rate (mg/hr)
+    u = max(0, u)  # Prevent negative infusion
+
+    # Pharmacokinetics (one-compartment)
+    dCdt = (u / V_d) - k_e * C
+    C += dCdt * dt
+
+    # Store results
+    concentration.append(C)
+    infusion_rate.append(u)
+
+# Plotting
+plt.figure(figsize=(10, 5))
+plt.subplot(2, 1, 1)
+plt.plot(time, concentration, label='Drug Concentration')
+plt.axhline(C_target, color='r', linestyle='--', label='Target')
+plt.ylabel('Concentration (mg/L)')
+plt.legend()
+
+plt.subplot(2, 1, 2)
+plt.plot(time, infusion_rate, label='Infusion Rate (mg/hr)', color='g')
+plt.xlabel('Time (hr)')
+plt.ylabel('Infusion Rate')
+plt.legend()
+
+plt.tight_layout()
+plt.show()
